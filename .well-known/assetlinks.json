@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.silverhome.app",
+      "sha256_cert_fingerprints": [
+        "0D:07:73:C8:CC:96:70:4E:74:FD:D8:A5:D8:20:76:A7:BB:49:BE:7B:7F:91:85:0B:4D:B4:13:FC:05:E3:D1:B3"
+      ]
+    }
+  }
+]
