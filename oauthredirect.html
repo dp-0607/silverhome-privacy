@@ -16,6 +16,12 @@
     .container { max-width: 480px; text-align: center; }
     h1 { font-size: 22px; color: #1a1a1a; margin-bottom: 12px; }
     p { font-size: 15px; color: #555; margin-bottom: 8px; }
+    .open-button {
+      display: inline-block; margin: 20px 0;
+      padding: 12px 32px; background: #4f8cff; color: white;
+      border-radius: 8px; font-size: 16px; font-weight: 600;
+      text-decoration: none;
+    }
     .footer { color: #aaa; font-size: 13px; margin-top: 32px; }
     a { color: #4f8cff; text-decoration: none; }
   </style>
@@ -23,13 +29,61 @@
 <body>
 <div class="container">
   <h1>Returning to SilverHome</h1>
-  <p>If the app does not open automatically, please return to it manually.</p>
-  <p>This page is part of the Google Sign-In flow. You can safely close it.</p>
+  <p id="status">Opening the app…</p>
+  <p>If the app does not open automatically, tap the button below.</p>
+  <a id="openLink" class="open-button" href="#">Open SilverHome</a>
+  <p style="font-size:13px;color:#888;">This page is part of the Google Sign-In flow. You can safely close it after returning to the app.</p>
   <p class="footer">
     <a href="./index.html">Privacy Policy</a> &nbsp;|&nbsp;
     <a href="./terms.html">Terms of Service</a> &nbsp;|&nbsp;
     <a href="./support.html">Support</a>
   </p>
 </div>
+
+<script>
+  // Force-redirect into the SilverHome app via Android intent:// scheme.
+  //
+  // Background: Android App Links (autoVerify + assetlinks.json) are correctly
+  // configured and verified on the device, but Samsung Internet / Chrome do
+  // NOT trigger the App Links handler when the URL is reached as part of an
+  // OAuth redirect chain (server-side 302). The browser treats the whole
+  // sign-in flow as one atomic web session to defend against OAuth code
+  // hijacking by malicious apps. Net effect: the user lands on this page
+  // instead of being bounced into the app.
+  //
+  // The fix is the industry-standard "intent:// fallback" — explicitly
+  // dispatch an Android intent on page load. The host + path + query are
+  // preserved verbatim so flutter_appauth equivalents (or our own
+  // GoogleOAuthService) receive the same authorization-code redirect they
+  // would have received via App Links.
+  //
+  // package= pins the target to com.silverhome.app — Android refuses to
+  // launch a different app even if it claims the same scheme. S.browser
+  // _fallback_url= is the Chrome/Samsung Internet escape hatch: if no app
+  // can handle the intent (user uninstalled SilverHome), the browser stays
+  // on this page instead of throwing a generic error.
+  (function () {
+    var params = window.location.search || '';
+    var hash = window.location.hash || '';
+    var pathQuery = '/silverhome-privacy/oauthredirect' + params + hash;
+    var fallback = window.location.href;
+    var intentUrl =
+      'intent://dp-0607.github.io' + pathQuery +
+      '#Intent;scheme=https;package=com.silverhome.app;' +
+      'S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end';
+
+    var openLink = document.getElementById('openLink');
+    if (openLink) openLink.href = intentUrl;
+
+    // Auto-trigger on load. Browsers that block programmatic navigation will
+    // fall through to the manual "Open SilverHome" button.
+    try {
+      window.location.replace(intentUrl);
+    } catch (e) {
+      var status = document.getElementById('status');
+      if (status) status.textContent = 'Could not open the app automatically.';
+    }
+  })();
+</script>
 </body>
 </html>
